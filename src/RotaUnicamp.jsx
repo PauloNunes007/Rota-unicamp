@@ -7,37 +7,74 @@ import {
   Plus, Check, Trash2, RefreshCw, Settings2, X,
   RotateCw, ChevronRight, ArrowLeft
 } from "lucide-react";
+import {
+  MOLDES, MOLDES_FONTE, INCIDENCIA_MAT, LEITURA_INCIDENCIA, ASSINATURA_BANCA,
+  PEGADINHAS, RADAR_RECENTE, PLANO_MOLDES, MOLDE_STATUS_LABEL, MOLDE_STATUS_CICLO, pesoMolde
+} from "./moldes.js";
 
 /* ============================================================
    Sistema visual
    Papel de caderno. Tinta azul. Correção em vermelho.
    Instrument Sans para interface e números, Literata para leitura.
    ============================================================ */
-const C = {
-  bg:       "#F6F6F4",
-  card:     "#FFFFFF",
-  ink:      "#0F141B",
-  inkSoft:  "#5B6673",
-  inkFaint: "#98A1AD",
-  line:     "#EAEBE7",
-  lineSoft: "#F1F2EE",
-  blue:     "#173C86",
-  blueMid:  "#2E5CB8",
-  blueSoft: "#EDF1F9",
-  red:      "#C0392B",
-  redSoft:  "#FBEDEB",
-  green:    "#2C7355",
-  greenSoft:"#EAF3EE",
-  amber:    "#B57A16",
-  amberSoft:"#FBF1DF",
-  shell:    "#FFFFFF",
+const CLARO = {
+  bg: "#F6F4EF", card: "#FFFEFC", shell: "#FCFBF8",
+  ink: "#28353E", inkSoft: "#647079", inkFaint: "#9AA5AB",
+  line: "#E7E3D9", lineSoft: "#F0EDE5",
+  blue: "#2F5286", blueMid: "#4A72AC", blueSoft: "#E9EEF5",
+  red: "#B54B3F", redSoft: "#F6E9E6",
+  green: "#3D7259", greenSoft: "#EAF1EC",
+  amber: "#AD7C2B", amberSoft: "#F6EEDD",
+  paper: "#FDFBF4", paperRule: "#DCE6EF", paperMargin: "#E8A9A0", paperEdge: "#E4DFD2",
+  cover: "linear-gradient(145deg,#3A5D8F 0%,#2A4470 55%,#1F3457 100%)",
+  ombra: "rgba(40,53,62,",
 };
-const SH = {
-  card: "0 1px 2px rgba(15,20,27,.04), 0 4px 12px rgba(15,20,27,.05)",
-  lift: "0 2px 4px rgba(15,20,27,.05), 0 10px 24px rgba(15,20,27,.08)",
-  hero: "0 1px 2px rgba(15,20,27,.05), 0 12px 32px rgba(23,60,134,.10)",
+
+const ESCURO = {
+  bg: "#141618", card: "#1D2023", shell: "#191B1E",
+  ink: "#E3E6E4", inkSoft: "#9BA2A5", inkFaint: "#6D7477",
+  line: "#2B2F33", lineSoft: "#232629",
+  blue: "#82A8DF", blueMid: "#6D93C9", blueSoft: "#1E2833",
+  red: "#DD8478", redSoft: "#2C2220",
+  green: "#77B896", greenSoft: "#1D2823",
+  amber: "#D6AB65", amberSoft: "#2A2519",
+  paper: "#212528", paperRule: "#2E353B", paperMargin: "#7A4A45", paperEdge: "#2A2E32",
+  cover: "linear-gradient(145deg,#2E3438 0%,#212528 55%,#17191B 100%)",
+  ombra: "rgba(0,0,0,",
 };
+
+const C = {};
+const SH = {};
 const R = { sm: 8, md: 12, lg: 16 };
+const inp = {}, sel = {}, btnP = {}, btnG = {}, btnQ = {}, btnI = {}, lbl = {};
+
+function applyTheme(modo) {
+  Object.assign(C, modo === "escuro" ? ESCURO : CLARO);
+  const o = C.ombra;
+  Object.assign(SH, {
+    card: `0 1px 1px ${o}.03), 0 2px 6px ${o}.05)`,
+    lift: `0 1px 2px ${o}.04), 0 8px 18px ${o}.09)`,
+    hero: `0 1px 2px ${o}.05), 0 10px 26px ${o}.14)`,
+    page: `0 1px 2px ${o}.05), 0 14px 34px ${o}.13)`,
+  });
+  Object.assign(inp, { background: C.card, border: `1px solid ${C.line}`, borderRadius: R.sm, color: C.ink, padding: "9px 12px", fontSize: 14, fontFamily: "inherit", outline: "none", transition: "border-color .12s, box-shadow .12s" });
+  Object.assign(sel, inp, { cursor: "pointer" });
+  Object.assign(btnP, { display: "inline-flex", alignItems: "center", gap: 7, background: C.blue, color: modo === "escuro" ? "#12161A" : "#fff", border: "none", borderRadius: R.sm, padding: "10px 17px", fontSize: 14, fontFamily: "inherit", fontWeight: 500, cursor: "pointer", transition: "transform .1s, filter .12s" });
+  Object.assign(btnG, { display: "inline-flex", alignItems: "center", gap: 7, background: C.card, color: C.inkSoft, border: `1px solid ${C.line}`, borderRadius: R.sm, padding: "10px 16px", fontSize: 14, fontFamily: "inherit", cursor: "pointer", transition: "background .12s" });
+  Object.assign(btnQ, { display: "inline-flex", alignItems: "center", gap: 6, background: C.blueSoft, color: C.blue, border: "none", borderRadius: 999, padding: "6px 13px", fontSize: 13, fontFamily: "inherit", fontWeight: 500, cursor: "pointer" });
+  Object.assign(btnI, { background: "transparent", border: "none", cursor: "pointer", padding: 5, borderRadius: 6, display: "inline-flex", alignItems: "center" });
+  Object.assign(lbl, { fontSize: 13, color: C.inkSoft, marginBottom: 6 });
+}
+applyTheme("claro");
+
+// Uma cor discreta por matéria, usada nas divisórias do caderno de erros
+const SUBJECT_COLOR = {
+  "Matemática": "#4A72AC", "Física": "#7D6BAE", "Química": "#3D9187",
+  "Biologia": "#3D7259", "Geografia": "#AD7C2B", "História": "#B5673F",
+  "Filosofia": "#8A6D9E", "Sociologia": "#B54B87", "Português": "#B54B3F",
+  "Literatura": "#9C5A3C", "Inglês": "#5C7FA6",
+};
+
 
 const EXAM_DATE = new Date("2026-10-18T09:00:00");
 const TARGET_SCORE = 60;
@@ -96,10 +133,14 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 /* ---------------- dados semente ---------------- */
 function seedTopics() {
   const seed = [
-    ["Matemática", "Geometria Plana", 5, 0.40], ["Matemática", "Geometria Analítica", 4, 0.60],
+    // Pesos vindos da contagem real de 105 questões objetivas da Unicamp.
+    // Funções é 22% da prova, e geometria somada é 37%.
+    ["Matemática", "Funções e Exponencial", 5, 0.75], ["Matemática", "Geometria Plana", 5, 0.40],
+    ["Matemática", "Geometria Analítica", 4, 0.60], ["Matemática", "Geometria Espacial", 4, 0.60],
+    ["Matemática", "Trigonometria", 4, 0.60], ["Matemática", "Matrizes, Determinantes e Complexos", 4, 0.65],
     ["Matemática", "Combinatória e Probabilidade", 3, 0.70], ["Matemática", "Polinômios", 3, 0.80],
-    ["Matemática", "Conjuntos", 2, 0.70], ["Matemática", "Trigonometria", 3, 0.60],
-    ["Matemática", "Funções e Exponencial", 3, 0.75],
+    ["Matemática", "Porcentagem e Matemática Financeira", 3, 0.65],
+    ["Matemática", "Conjuntos", 2, 0.70], ["Matemática", "Estatística e Médias", 2, 0.70],
     ["Física", "Cinemática e Encontros", 4, 0.60], ["Física", "Calorimetria e Termologia", 3, 0.85],
     ["Física", "Transferência de Calor", 3, 0.50], ["Física", "Gravitação e MCU", 4, 0.70],
     ["Física", "Eletricidade", 2, 0.70],
@@ -247,11 +288,13 @@ function seedSimulados() {
 const emptyData = {
   topics: seedTopics(), errors: [], flashcards: [], aulas: seedAulas(), obras: seedObras(),
   simulados: seedSimulados(),
+  // status por molde da banca, no formato { M01: "novo" | "treinando" | "dominado" }
+  moldes: {},
   route: {},
   settings: { dailyHours: 8, blockMinutes: 120, weekSchedule: DEFAULT_WEEK_SCHEDULE, dailyReadingPages: 15, activeObraId: null, dailyCardLimit: 100, cardsFollowSchedule: true, subjectModes: SUBJECT_MODES_DEFAULT }
 };
 
-const SEED_VERSION = 3;
+const SEED_VERSION = 4;
 
 // Junta dados de fábrica novos a um armazenamento que já existe,
 // sem apagar nada que o usuário tenha registrado.
@@ -287,7 +330,32 @@ function migrate(stored) {
       ...t,
     }));
     d.settings.subjectModes = { ...SUBJECT_MODES_DEFAULT, ...(d.settings.subjectModes || {}) };
+    if (!d.settings.tema) d.settings.tema = "claro";
     d.seedVersion = 3;
+  }
+
+  if ((d.seedVersion || 0) < 4) {
+    // guarda o progresso nos moldes da banca
+    d.moldes = d.moldes || {};
+
+    // A contagem das 105 questões mostrou que a lista de matemática estava
+    // desequilibrada. Corrige o peso do que já existe e cria o que faltava,
+    // sem tocar em acertos, fase ou histórico de nenhum tópico.
+    const pesoNovo = {
+      "Funções e Exponencial": 5, "Geometria Plana": 5, "Geometria Analítica": 4,
+      "Trigonometria": 4, "Combinatória e Probabilidade": 3, "Polinômios": 3, "Conjuntos": 2,
+    };
+    d.topics = (d.topics || []).map((t) =>
+      t.subject === "Matemática" && pesoNovo[t.name] ? { ...t, examWeight: pesoNovo[t.name] } : t
+    );
+
+    const jaTem = new Set(d.topics.filter((t) => t.subject === "Matemática").map((t) => t.name));
+    const faltando = seedTopics().filter(
+      (t) => t.subject === "Matemática" && !jaTem.has(t.name)
+    );
+    d.topics = [...d.topics, ...faltando];
+
+    d.seedVersion = 4;
   }
   return d;
 }
@@ -432,6 +500,7 @@ export default function RotaUnicamp() {
   const [data, setData] = useState(emptyData);
   const [loaded, setLoaded] = useState(false);
   const [tab, setTab] = useState("rota");
+  const [tema, setTema] = useState("claro");
   const [showSettings, setShowSettings] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -439,7 +508,7 @@ export default function RotaUnicamp() {
     if (!document.getElementById("ru-fonts")) {
       const l = document.createElement("link");
       l.id = "ru-fonts"; l.rel = "stylesheet";
-      l.href = "https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap";
+      l.href = "https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&family=Kalam:wght@400;700&display=swap";
       document.head.appendChild(l);
     }
     (async () => {
@@ -447,6 +516,7 @@ export default function RotaUnicamp() {
         const res = await window.storage.get(STORAGE_KEY, false);
         if (res && res.value) {
           const migrado = migrate(JSON.parse(res.value));
+          if (migrado.settings?.tema) setTema(migrado.settings.tema);
           setData(migrado);
           try { await window.storage.set(STORAGE_KEY, JSON.stringify(migrado), false); } catch {}
         } else {
@@ -463,6 +533,14 @@ export default function RotaUnicamp() {
     catch (e) { setToast("Não deu para salvar agora. As mudanças valem só nesta sessão."); setTimeout(() => setToast(null), 4000); }
   }, []);
 
+  applyTheme(tema);
+
+  function trocarTema() {
+    const novo = tema === "claro" ? "escuro" : "claro";
+    setTema(novo);
+    persist({ ...data, settings: { ...data.settings, tema: novo } });
+  }
+
   const daysLeft = useMemo(() => Math.max(0, Math.ceil((EXAM_DATE - new Date()) / 86400000)), []);
   const bestScore = useMemo(() => data.simulados.length ? Math.max(...data.simulados.map((s) => Math.round((s.acertos / (s.total || TOTAL_QUESTIONS)) * TOTAL_QUESTIONS))) : null, [data.simulados]);
 
@@ -474,6 +552,7 @@ export default function RotaUnicamp() {
     <div style={{ fontFamily: "'Instrument Sans', system-ui, -apple-system, sans-serif", background: C.bg, color: C.ink, height: "100vh", display: "flex", position: "relative", overflow: "hidden" }}>
       <style>{`
         html, body, #root { height: 100%; margin: 0; background: ${C.bg}; }
+        ::selection { background: ${C.blueSoft}; }
         .ru-nav:hover { background: ${C.lineSoft} !important; color: ${C.ink} !important; }
         .ru-row { transition: background .12s; }
         .ru-row:hover { background: ${C.lineSoft} !important; }
@@ -489,10 +568,24 @@ export default function RotaUnicamp() {
         .ru-in:nth-child(5){animation-delay:.22s} .ru-in:nth-child(6){animation-delay:.27s}
         .ru-hero {
           background:
-            repeating-linear-gradient(0deg, rgba(255,255,255,.055) 0 1px, transparent 1px 34px),
-            repeating-linear-gradient(90deg, rgba(255,255,255,.055) 0 1px, transparent 1px 34px),
-            radial-gradient(120% 140% at 88% 8%, #2E5CB8 0%, #173C86 46%, #102A5E 100%);
+            repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 34px),
+            repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, transparent 1px 34px),
+            radial-gradient(120% 140% at 88% 8%, #4A72AC 0%, #2F5286 50%, #223B62 100%);
         }
+        @keyframes ruFolha {
+          0%   { opacity: 0; transform: rotateY(-52deg) translateZ(0); }
+          60%  { opacity: 1; }
+          100% { opacity: 1; transform: rotateY(0deg); }
+        }
+        @keyframes ruFolhaTras {
+          0%   { opacity: 0; transform: rotateY(38deg); }
+          100% { opacity: 1; transform: rotateY(0deg); }
+        }
+        .ru-folha { animation: ruFolha .46s cubic-bezier(.3,.72,.28,1) both; backface-visibility: hidden; }
+        .ru-folha-tras { animation: ruFolhaTras .38s cubic-bezier(.3,.72,.28,1) both; backface-visibility: hidden; }
+        .ru-capa { transition: transform .3s cubic-bezier(.3,.72,.28,1), box-shadow .3s; }
+        .ru-capa:hover { transform: rotateY(-9deg) translateX(-3px); box-shadow: ${SH.lift}; }
+        .ru-capa:active { transform: rotateY(-16deg); }
         .ru-lesson p { margin: 0 0 1.1em; }
         .ru-lesson strong { font-weight: 600; }
         input:focus, textarea:focus, select:focus { border-color: ${C.blueMid} !important; box-shadow: 0 0 0 3px ${C.blueSoft}; }
@@ -502,13 +595,14 @@ export default function RotaUnicamp() {
         @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
       `}</style>
 
-      <Rail tab={tab} setTab={setTab} daysLeft={daysLeft} bestScore={bestScore} />
+      <Rail tab={tab} setTab={setTab} daysLeft={daysLeft} bestScore={bestScore} tema={tema} trocarTema={trocarTema} />
 
       <main style={{ flex: 1, minWidth: 0, minHeight: 0, padding: "44px 56px 96px", overflowY: "auto", background: C.bg }}>
         <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         {tab === "rota" && <Rota data={data} persist={persist} daysLeft={daysLeft} bestScore={bestScore} setShowSettings={setShowSettings} setTab={setTab} />}
         {tab === "aulas" && <Aulas data={data} persist={persist} />}
         {tab === "topicos" && <Topicos data={data} persist={persist} daysLeft={daysLeft} />}
+        {tab === "moldes" && <Moldes data={data} persist={persist} />}
         {tab === "flashcards" && <Flashcards data={data} persist={persist} />}
         {tab === "leitura" && <Leitura data={data} persist={persist} />}
         {tab === "erros" && <CadernoErros data={data} persist={persist} />}
@@ -526,10 +620,10 @@ export default function RotaUnicamp() {
 }
 
 /* ---------------- navegação lateral ---------------- */
-function Rail({ tab, setTab, daysLeft, bestScore }) {
+function Rail({ tab, setTab, daysLeft, bestScore, tema, trocarTema }) {
   const groups = [
     ["Hoje", [["rota", "Rota do dia"], ["leitura", "Leitura"], ["flashcards", "Flashcards"]]],
-    ["Estudo", [["aulas", "Aulas"], ["topicos", "Tópicos"]]],
+    ["Estudo", [["aulas", "Aulas"], ["topicos", "Tópicos"], ["moldes", "Moldes da banca"]]],
     ["Diagnóstico", [["erros", "Caderno de erros"], ["simulados", "Simulados"], ["painel", "Painel"]]],
   ];
   const lo = 40;
@@ -583,6 +677,12 @@ function Rail({ tab, setTab, daysLeft, bestScore }) {
           </div>
         ))}
       </div>
+
+      <div style={{ padding: "14px 22px 0", borderTop: `1px solid ${C.line}`, marginTop: "auto" }}>
+        <button className="ru-btn" onClick={trocarTema} style={{ ...btnG, width: "100%", justifyContent: "center", fontSize: 13.5 }}>
+          {tema === "claro" ? "Modo escuro" : "Modo claro"}
+        </button>
+      </div>
     </nav>
   );
 }
@@ -630,13 +730,7 @@ function Stat({ value, label, color }) {
   );
 }
 
-const inp = { background: C.card, border: `1px solid ${C.line}`, borderRadius: R.sm, color: C.ink, padding: "9px 12px", fontSize: 14, fontFamily: "inherit", outline: "none", transition: "border-color .12s, box-shadow .12s" };
-const sel = { ...inp, cursor: "pointer" };
-const btnP = { display: "inline-flex", alignItems: "center", gap: 7, background: C.blue, color: "#fff", border: "none", borderRadius: R.sm, padding: "10px 17px", fontSize: 14, fontFamily: "inherit", fontWeight: 500, cursor: "pointer", boxShadow: "0 1px 2px rgba(23,60,134,.2)", transition: "transform .1s, box-shadow .12s" };
-const btnG = { display: "inline-flex", alignItems: "center", gap: 7, background: C.card, color: C.inkSoft, border: `1px solid ${C.line}`, borderRadius: R.sm, padding: "10px 16px", fontSize: 14, fontFamily: "inherit", cursor: "pointer", transition: "background .12s" };
-const btnQ = { display: "inline-flex", alignItems: "center", gap: 6, background: C.blueSoft, color: C.blue, border: "none", borderRadius: 999, padding: "6px 13px", fontSize: 13, fontFamily: "inherit", fontWeight: 500, cursor: "pointer" };
-const btnI = { background: "transparent", border: "none", cursor: "pointer", padding: 5, borderRadius: 6, display: "inline-flex", alignItems: "center" };
-const lbl = { fontSize: 13, color: C.inkSoft, marginBottom: 6 };
+
 
 function Modal({ title, onClose, children, wide }) {
   return (
@@ -738,7 +832,7 @@ function Hero({ daysLeft, bestScore, sched, weekday, blocks, dueCards }) {
             </span>
           </div>
           <div style={{ height: 9, background: "rgba(255,255,255,.16)", borderRadius: 999, position: "relative" }}>
-            <div style={{ position: "absolute", inset: 0, width: `${pos * 100}%`, background: "linear-gradient(90deg,#8FB6F5,#FFFFFF)", borderRadius: 999, boxShadow: "0 0 14px rgba(255,255,255,.5)" }} />
+            <div style={{ position: "absolute", inset: 0, width: `${pos * 100}%`, background: "linear-gradient(90deg,#A9C1E4,#EFF3FA)", borderRadius: 999, boxShadow: "0 0 8px rgba(255,255,255,.28)" }} />
             <div style={{ position: "absolute", left: `${((CUTOFF_SCORE - lo) / (TARGET_SCORE - lo)) * 100}%`, top: -4, width: 2, height: 17, background: "#FF9E92", borderRadius: 2 }} />
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, fontSize: 12.5, opacity: .62 }}>
@@ -890,6 +984,7 @@ function Rota({ data, persist, daysLeft, bestScore, setShowSettings, setTab }) {
       <BackupNudge data={data} setShowSettings={setShowSettings} />
       <ReadingStrip data={data} persist={persist} setTab={setTab} />
       {cardsBanner}
+      {(sched.subjects || []).includes("Matemática") && <MoldesStrip data={data} persist={persist} setTab={setTab} />}
 
       {blocks.length === 0 && <Empty>Nenhuma rota gerada hoje ainda.</Empty>}
 
@@ -910,7 +1005,7 @@ function Rota({ data, persist, daysLeft, bestScore, setShowSettings, setTab }) {
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 19.5, fontWeight: 600, letterSpacing: "-0.02em", textDecoration: b.done ? "line-through" : "none" }}>{b.topicName}</div>
                   <div style={{ marginTop: 8, display: "flex", gap: 7, flexWrap: "wrap" }}>
-                    <Tag color={C.blue}>{b.subject}</Tag>
+                    <Tag color={SUBJECT_COLOR[b.subject] || C.blue}>{b.subject}</Tag>
                     {b.mode === "profundidade" && topicOf(b) && (
                       <Tag color={PHASE_COLOR[fase(topicOf(b))]}>{PHASE_LABEL[fase(topicOf(b))]}</Tag>
                     )}
@@ -1377,6 +1472,273 @@ function Topicos({ data, persist, daysLeft }) {
   );
 }
 
+/* ---------------- Moldes da banca ---------------- */
+const MOLDE_COR = { novo: null, treinando: "#B57A16", dominado: "#2C7355" };
+
+// Fila do dia. Ordena por peso e devolve os primeiros que ainda não estão dominados.
+function moldesDoDia(status, quantos) {
+  return MOLDES
+    .map((m) => ({ m, p: pesoMolde(m, status[m.id]) }))
+    .filter((x) => x.p > 0)
+    .sort((a, b) => b.p - a.p || a.m.id.localeCompare(b.m.id))
+    .slice(0, quantos)
+    .map((x) => x.m);
+}
+
+function MoldesStrip({ data, persist, setTab }) {
+  const status = data.moldes || {};
+  const fila = useMemo(() => moldesDoDia(status, 2), [status]);
+  if (!fila.length) return null;
+
+  function marcar(id) {
+    persist({ ...data, moldes: { ...status, [id]: "treinando" } });
+  }
+
+  return (
+    <div style={{
+      background: C.card, borderRadius: R.md, boxShadow: SH.card,
+      padding: "16px 20px", marginBottom: 20, borderLeft: `3px solid ${C.amber}`
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 16, marginBottom: 10 }}>
+        <span style={{ fontSize: 14.5, fontWeight: 600 }}>Moldes para reconhecer hoje</span>
+        <button className="ru-btn" onClick={() => setTab("moldes")} style={{ ...btnI, fontSize: 13, color: C.blue, fontFamily: "inherit" }}>
+          ver todos <ChevronRight size={14} />
+        </button>
+      </div>
+      {fila.map((m, i) => (
+        <div key={m.id} style={{ paddingTop: i ? 12 : 0, marginTop: i ? 12 : 0, borderTop: i ? `1px solid ${C.lineSoft}` : "none" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "baseline" }}>
+            <span style={{ fontSize: 14.5, fontWeight: 500 }}>{m.titulo}</span>
+            <button className="ru-btn" onClick={() => marcar(m.id)} style={{ ...btnQ, background: C.amberSoft, color: C.amber, flexShrink: 0 }}>
+              Estou treinando
+            </button>
+          </div>
+          <div style={{ fontSize: 13.5, color: C.inkSoft, marginTop: 5, lineHeight: 1.55 }}>{m.gatilho}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Moldes({ data, persist }) {
+  const [aba, setAba] = useState("moldes");
+  const [topico, setTopico] = useState("todos");
+  const [soCriticos, setSoCriticos] = useState(false);
+  const [aberto, setAberto] = useState(null);
+
+  const status = data.moldes || {};
+  const topicos = useMemo(() => {
+    const t = []; MOLDES.forEach((m) => { if (!t.includes(m.topico)) t.push(m.topico); }); return t;
+  }, []);
+
+  const lista = useMemo(() => MOLDES.filter(
+    (m) => (topico === "todos" || m.topico === topico) && (!soCriticos || m.nivel === "obrigatoria")
+  ), [topico, soCriticos]);
+
+  const dominados = MOLDES.filter((m) => status[m.id] === "dominado").length;
+
+  function girar(id) {
+    const proximo = MOLDE_STATUS_CICLO[status[id] || "novo"];
+    persist({ ...data, moldes: { ...status, [id]: proximo } });
+  }
+
+  const abas = [
+    ["moldes", "Moldes"], ["assinatura", "Jeito da banca"], ["pegadinhas", "Pegadinhas"],
+    ["incidencia", "Incidência"], ["radar", "Depois de 2022"],
+  ];
+
+  return (
+    <div>
+      <PageHead
+        title="Moldes da banca"
+        sub={`${MOLDES.length} padrões destilados de 105 questões objetivas de matemática da Unicamp. A prova repete formato muito mais do que repete número, e reconhecer o formato é o que falta na hora.`}
+        right={<span style={{ fontSize: 14, color: C.inkSoft, alignSelf: "center" }}>{dominados} de {MOLDES.length} dominados</span>}
+      />
+
+      <div style={{ display: "flex", gap: 22, borderBottom: `1px solid ${C.line}`, marginBottom: 24, overflowX: "auto" }}>
+        {abas.map(([id, label]) => {
+          const on = aba === id;
+          return (
+            <button key={id} className="ru-nav" onClick={() => setAba(id)} style={{
+              background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit",
+              fontSize: 16.5, padding: "0 0 14px", whiteSpace: "nowrap",
+              color: on ? C.ink : C.inkFaint, fontWeight: on ? 600 : 400,
+              borderBottom: `2px solid ${on ? C.blue : "transparent"}`, marginBottom: -1
+            }}>{label}</button>
+          );
+        })}
+      </div>
+
+      {aba === "moldes" && (
+        <>
+          <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap", marginBottom: 16 }}>
+            <select value={topico} onChange={(e) => setTopico(e.target.value)} style={{ ...sel, minWidth: 210 }}>
+              <option value="todos">Todos os tópicos</option>
+              {topicos.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <label style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 14, color: C.inkSoft, cursor: "pointer" }}>
+              <input type="checkbox" checked={soCriticos} onChange={(e) => setSoCriticos(e.target.checked)} />
+              Só o que não pode errar
+            </label>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {lista.map((m) => {
+              const st = status[m.id] || "novo";
+              const cor = MOLDE_COR[st];
+              const on = aberto === m.id;
+              return (
+                <div key={m.id} className="ru-card" style={{
+                  background: C.card, borderRadius: R.lg, boxShadow: SH.card,
+                  position: "relative", overflow: "hidden", opacity: st === "dominado" ? .74 : 1
+                }}>
+                  {cor && <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: cor }} />}
+
+                  <button onClick={() => setAberto(on ? null : m.id)} style={{
+                    display: "block", width: "100%", textAlign: "left", background: "transparent",
+                    border: "none", cursor: "pointer", color: C.ink, fontFamily: "inherit", padding: "22px 26px 18px"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start" }}>
+                      <div style={{ display: "flex", gap: 14, minWidth: 0 }}>
+                        <span style={{ fontSize: 13, color: C.inkFaint, marginTop: 4, flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{m.id}</span>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 18.5, fontWeight: 600, letterSpacing: "-0.02em" }}>{m.titulo}</div>
+                          <div style={{ marginTop: 8, display: "flex", gap: 7, flexWrap: "wrap" }}>
+                            <Tag color={SUBJECT_COLOR["Matemática"]}>{m.topico}</Tag>
+                            {m.nivel === "obrigatoria" && <Tag color={C.red}>Não pode errar</Tag>}
+                            {m.incidencia === "repetida" && <Tag color={C.amber}>Repetiu de ano</Tag>}
+                            {m.alertaPessoal && <Tag color={C.green}>Já te pegou</Tag>}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                        <span style={{ fontSize: 13, color: C.inkFaint }}>{m.ocorrencias}×</span>
+                        <ChevronRight size={16} color={C.inkFaint} style={{ transform: on ? "rotate(90deg)" : "none", transition: "transform .15s" }} />
+                      </div>
+                    </div>
+
+                    <div style={{
+                      marginTop: 14, paddingLeft: 14, borderLeft: `2px solid ${C.red}`,
+                      fontFamily: "'Literata', Georgia, serif", fontSize: 16, lineHeight: 1.65, color: C.ink
+                    }}>{m.gatilho}</div>
+                  </button>
+
+                  {on && (
+                    <div style={{ borderTop: `1px solid ${C.lineSoft}`, padding: "22px 26px 24px", display: "flex", flexDirection: "column", gap: 22 }}>
+                      <section>
+                        <div style={{ ...lbl, fontWeight: 600 }}>Rota de resolução</div>
+                        <ol style={{ margin: 0, paddingLeft: 20, display: "flex", flexDirection: "column", gap: 7, fontSize: 15, lineHeight: 1.6 }}>
+                          {m.rota.map((p, i) => <li key={i}>{p}</li>)}
+                        </ol>
+                      </section>
+
+                      <section style={{ background: C.redSoft, borderLeft: `3px solid ${C.red}`, borderRadius: R.md, padding: "16px 18px" }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: C.red, marginBottom: 5 }}>Onde a banca derruba</div>
+                        <div style={{ fontSize: 14.5, lineHeight: 1.6 }}>{m.pegadinha}</div>
+                      </section>
+
+                      {m.alertaPessoal && (
+                        <section style={{ background: C.greenSoft, borderLeft: `3px solid ${C.green}`, borderRadius: R.md, padding: "16px 18px" }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: C.green, marginBottom: 5 }}>No seu histórico</div>
+                          <div style={{ fontSize: 14.5, lineHeight: 1.6 }}>{m.alertaPessoal}</div>
+                        </section>
+                      )}
+
+                      <section>
+                        <div style={{ ...lbl, fontWeight: 600 }}>Onde treinar</div>
+                        <ul style={{ margin: 0, paddingLeft: 20, fontSize: 14, color: C.inkSoft, lineHeight: 1.7 }}>
+                          {m.exemplos.map((e, i) => <li key={i}>{e}</li>)}
+                        </ul>
+                      </section>
+
+                      <button className="ru-btn" onClick={() => girar(m.id)} style={{ ...btnG, alignSelf: "flex-start" }}>
+                        {st === "dominado" && <Check size={14} color={C.green} />}
+                        {MOLDE_STATUS_LABEL[st]}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {aba === "assinatura" && (
+        <div style={{ maxWidth: 720, display: "flex", flexDirection: "column", gap: 4 }}>
+          {ASSINATURA_BANCA.map((a, i) => (
+            <Sheet key={i} style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: 17.5, fontWeight: 600, letterSpacing: "-0.015em", marginBottom: 7 }}>{a.traco}</div>
+              <div style={{ fontFamily: "'Literata', Georgia, serif", fontSize: 16, lineHeight: 1.72, color: C.inkSoft }}>{a.detalhe}</div>
+            </Sheet>
+          ))}
+        </div>
+      )}
+
+      {aba === "pegadinhas" && (
+        <div style={{ maxWidth: 720, display: "flex", flexDirection: "column", gap: 10 }}>
+          {PEGADINHAS.map((p, i) => (
+            <Sheet key={i} accent={C.red}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "baseline" }}>
+                <div style={{ fontSize: 17.5, fontWeight: 600, letterSpacing: "-0.015em" }}>{p.nome}</div>
+                {p.reincidencia && <Tag color={C.red}>{p.reincidencia}</Tag>}
+              </div>
+              <div style={{ fontFamily: "'Literata', Georgia, serif", fontSize: 16, lineHeight: 1.72, color: C.inkSoft, margin: "8px 0 14px" }}>{p.descricao}</div>
+              <div style={{ background: C.greenSoft, borderRadius: R.sm, padding: "12px 15px", fontSize: 14.5, color: C.green, lineHeight: 1.6 }}>{p.antidoto}</div>
+            </Sheet>
+          ))}
+        </div>
+      )}
+
+      {aba === "incidencia" && (
+        <div style={{ maxWidth: 760 }}>
+          <div style={{ fontSize: 13.5, color: C.inkSoft, marginBottom: 18 }}>{MOLDES_FONTE.base}</div>
+          <Sheet style={{ marginBottom: 22 }}>
+            {INCIDENCIA_MAT.map((c, i) => (
+              <div key={c.capitulo} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 0", borderTop: i ? `1px solid ${C.lineSoft}` : "none" }}>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 15 }}>{c.capitulo}</span>
+                <span style={{ width: 34, textAlign: "right", fontSize: 14, color: C.inkFaint, fontVariantNumeric: "tabular-nums" }}>{c.questoes}</span>
+                <span style={{ width: 190, height: 7, background: C.lineSoft, borderRadius: 999, overflow: "hidden", flexShrink: 0 }}>
+                  <span style={{ display: "block", height: "100%", width: `${(c.percentual / 22) * 100}%`, background: i === 0 ? C.blue : C.blueMid, borderRadius: 999 }} />
+                </span>
+                <span style={{ width: 48, textAlign: "right", fontSize: 14, fontVariantNumeric: "tabular-nums" }}>{c.percentual}%</span>
+              </div>
+            ))}
+          </Sheet>
+          <ul style={{ margin: 0, paddingLeft: 20, display: "flex", flexDirection: "column", gap: 12, fontSize: 15.5, lineHeight: 1.65, color: C.inkSoft }}>
+            {LEITURA_INCIDENCIA.map((l, i) => <li key={i}>{l}</li>)}
+          </ul>
+        </div>
+      )}
+
+      {aba === "radar" && (
+        <div style={{ maxWidth: 720, display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ fontSize: 13.5, color: C.inkFaint, marginBottom: 6, lineHeight: 1.6 }}>{RADAR_RECENTE.aviso}</div>
+          {RADAR_RECENTE.itens.map((r, i) => (
+            <Sheet key={i} accent={C.blue}>
+              <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.015em", marginBottom: 8 }}>{r.ano}</div>
+              <div style={{ fontFamily: "'Literata', Georgia, serif", fontSize: 16, lineHeight: 1.72, marginBottom: 12 }}>{r.observacao}</div>
+              <div style={{ background: C.blueSoft, borderRadius: R.sm, padding: "12px 15px", fontSize: 14.5, color: C.blue, lineHeight: 1.6 }}>{r.leitura}</div>
+            </Sheet>
+          ))}
+          <Sheet accent={C.red}>
+            <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.015em", marginBottom: 10 }}>O que a apostila não cobre</div>
+            <ul style={{ margin: 0, paddingLeft: 20, display: "flex", flexDirection: "column", gap: 9, fontSize: 15, lineHeight: 1.6, color: C.inkSoft }}>
+              {RADAR_RECENTE.lacunasDoMaterial.map((l, i) => <li key={i}>{l}</li>)}
+            </ul>
+          </Sheet>
+          <Sheet>
+            <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.015em", marginBottom: 10 }}>Como usar isto</div>
+            <ol style={{ margin: 0, paddingLeft: 20, display: "flex", flexDirection: "column", gap: 9, fontSize: 15, lineHeight: 1.6, color: C.inkSoft }}>
+              {PLANO_MOLDES.map((p, i) => <li key={i}>{p}</li>)}
+            </ol>
+          </Sheet>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ---------------- Flashcards ---------------- */
 function Flashcards({ data, persist }) {
   const today = todayISO();
@@ -1578,7 +1940,7 @@ function Flashcards({ data, persist }) {
       <div style={{ borderRadius: R.md, overflow: "hidden", background: list.length ? C.card : "transparent", boxShadow: list.length ? SH.card : "none" }}>
         {list.map((c, i) => (
           <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "11px 22px", borderTop: i ? `1px solid ${C.lineSoft}` : "none" }}>
-            <span style={{ fontSize: 12.5, color: C.inkFaint, width: 84, flexShrink: 0 }}>{c.subject}</span>
+            <span style={{ fontSize: 12.5, color: SUBJECT_COLOR[c.subject] || C.inkFaint, width: 84, flexShrink: 0 }}>{c.subject}</span>
             <span style={{ flex: 1, fontSize: 14.5, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.front}</span>
             <span style={{ fontSize: 12.5, color: c.nextReview <= today ? C.amber : C.inkFaint, whiteSpace: "nowrap" }}>
               {c.nextReview <= today ? "vencido" : `volta ${fmtDate(c.nextReview)}`}
@@ -1645,12 +2007,37 @@ function Leitura({ data, persist }) {
 }
 
 /* ---------------- Caderno de erros ---------------- */
+const POR_FOLHA = 2;
+
 function CadernoErros({ data, persist }) {
+  const [vista, setVista] = useState("capa");   // capa | sumario | folhas
+  const [subject, setSubject] = useState(null);
+  const [folha, setFolha] = useState(0);
+  const [dir, setDir] = useState("frente");
   const [open, setOpen] = useState(false);
-  const [filter, setFilter] = useState("Todas");
+  const [imp, setImp] = useState(""); const [msg, setMsg] = useState(null);
+
   const blank = () => ({ subject: SUBJECTS[0], topic: "", errorType: "conteudo", source: "", reasoning: "", specificError: "", correctSolution: "", keyConcept: "", trigger: "" });
   const [f, setF] = useState(blank());
-  const [imp, setImp] = useState(""); const [msg, setMsg] = useState(null);
+
+  const porMateria = useMemo(() => {
+    const m = {};
+    data.errors.forEach((e) => { (m[e.subject] = m[e.subject] || []).push(e); });
+    return Object.entries(m)
+      .map(([s, arr]) => ({ subject: s, erros: arr.slice().sort((a, b) => b.date.localeCompare(a.date)) }))
+      .sort((a, b) => b.erros.length - a.erros.length);
+  }, [data.errors]);
+
+  const erros = subject ? (porMateria.find((m) => m.subject === subject)?.erros || []) : [];
+  const totalFolhas = Math.max(1, Math.ceil(erros.length / POR_FOLHA));
+  const naFolha = erros.slice(folha * POR_FOLHA, folha * POR_FOLHA + POR_FOLHA);
+
+  function abrirMateria(s) { setSubject(s); setFolha(0); setDir("frente"); setVista("folhas"); }
+  function irFolha(n) {
+    if (n < 0 || n >= totalFolhas) return;
+    setDir(n > folha ? "frente" : "tras");
+    setFolha(n);
+  }
 
   function importarErros() {
     try {
@@ -1660,8 +2047,7 @@ function CadernoErros({ data, persist }) {
       const novos = itens.filter((e) => e && e.topic && !jaTem.has(chave(e))).map((e) => {
         const d = e.date || todayISO();
         return {
-          id: uid(), date: d,
-          due1: e.due1 || addDays(d, 1), due7: e.due7 || addDays(d, 7), due30: e.due30 || addDays(d, 30),
+          id: uid(), date: d, due1: e.due1 || addDays(d, 1), due7: e.due7 || addDays(d, 7), due30: e.due30 || addDays(d, 30),
           r1Done: !!e.r1Done, r7Done: !!e.r7Done, r30Done: !!e.r30Done,
           subject: e.subject || SUBJECTS[0], topic: e.topic, errorType: e.errorType || "conteudo",
           source: e.source || "", reasoning: e.reasoning || "", specificError: e.specificError || "",
@@ -1675,72 +2061,71 @@ function CadernoErros({ data, persist }) {
     } catch { setMsg("O texto colado não é um JSON válido."); }
   }
 
-  const list = filter === "Todas" ? data.errors : data.errors.filter((e) => e.subject === filter);
-
   return (
     <div>
       <PageHead
         title="Caderno de erros"
-        sub="Raciocínio, erro específico, solução, conceito e gatilho. Cada entrada entra automaticamente na revisão espaçada."
-        right={<button className="ru-btn" onClick={() => setOpen(true)} style={btnP}><Plus size={14} /> Registrar erro</button>}
+        sub={vista === "capa" ? "Abra o caderno para ver o sumário por matéria."
+          : vista === "sumario" ? "Escolha a matéria e o caderno folheia até ela."
+          : `${subject}, folha ${folha + 1} de ${totalFolhas}`}
+        right={<>
+          {vista !== "capa" && <button className="ru-btn" onClick={() => { setVista(vista === "folhas" ? "sumario" : "capa"); }} style={btnG}><ArrowLeft size={14} /> Voltar</button>}
+          <button className="ru-btn" onClick={() => setOpen(true)} style={btnP}><Plus size={14} /> Registrar erro</button>
+        </>}
       />
 
-      <select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ ...sel, marginBottom: 18, fontSize: 13.5 }}>
-        <option>Todas</option>{SUBJECTS.map((s) => <option key={s} value={s}>{s}</option>)}
-      </select>
+      <div style={{ perspective: 1800, display: "flex", justifyContent: "center", paddingBottom: 8 }}>
+        {vista === "capa" && <Capa total={data.errors.length} materias={porMateria.length} onOpen={() => setVista("sumario")} />}
 
-      {!list.length && <Empty>Nenhum erro registrado ainda. Registre o primeiro depois do próximo bloco de questões.</Empty>}
+        {vista === "sumario" && (
+          <Folha key="sumario" dir="frente" wide>
+            <TituloManuscrito>Sumário</TituloManuscrito>
+            {!porMateria.length && <LinhaManuscrita muted>Nenhum erro registrado ainda.</LinhaManuscrita>}
+            {porMateria.map((m, i) => (
+              <button key={m.subject} onClick={() => abrirMateria(m.subject)} style={{
+                display: "flex", alignItems: "baseline", gap: 12, width: "100%", textAlign: "left",
+                background: "transparent", border: "none", cursor: "pointer", padding: "9px 0",
+                fontFamily: "'Kalam', cursive", color: C.ink, lineHeight: 1.9
+              }}>
+                <span style={{ fontSize: 17, color: C.inkFaint, width: 26 }}>{i + 1}.</span>
+                <span style={{ fontSize: 21, color: SUBJECT_COLOR[m.subject] || C.ink, fontWeight: 700 }}>{m.subject}</span>
+                <span style={{ flex: 1, borderBottom: `1px dotted ${C.paperRule}`, transform: "translateY(-4px)" }} />
+                <span style={{ fontSize: 18, color: C.inkSoft }}>{m.erros.length} erro{m.erros.length > 1 ? "s" : ""}</span>
+                <span style={{ fontSize: 16, color: C.inkFaint }}>fl. {i + 1}</span>
+              </button>
+            ))}
+          </Folha>
+        )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 780 }}>
-        {list.map((e) => {
-          const et = ERROR_TYPES[e.errorType || "conteudo"];
-          return (
-            <Sheet key={e.id} accent={et.color} style={{ animation: "ruUp .3s both" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 600 }}>{e.topic}</div>
-                  <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 3 }}>
-                    {e.subject}{e.source ? `, ${e.source}` : ""}, {fmtDate(e.date)}
-                  </div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <Tag color={et.color}>{et.label}</Tag>
-                  <button className="ru-btn" onClick={() => persist({ ...data, errors: data.errors.filter((x) => x.id !== e.id) })} style={btnI}><Trash2 size={14} color={C.inkFaint} /></button>
-                </div>
-              </div>
+        {vista === "folhas" && (
+          <Folha key={`${subject}-${folha}`} dir={dir} wide color={SUBJECT_COLOR[subject]}>
+            <TituloManuscrito color={SUBJECT_COLOR[subject]}>{subject}</TituloManuscrito>
+            {!naFolha.length && <LinhaManuscrita muted>Folha em branco.</LinhaManuscrita>}
+            {naFolha.map((e, i) => <ErroManuscrito key={e.id} e={e} ultimo={i === naFolha.length - 1}
+              onDelete={() => persist({ ...data, errors: data.errors.filter((x) => x.id !== e.id) })} />)}
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 24px", marginTop: 16 }}>
-                <Field label="O que eu fiz" value={e.reasoning} />
-                <Field label="Onde errei" value={e.specificError} color={C.red} />
-                <Field label="Como se resolve" value={e.correctSolution} color={C.green} />
-                <Field label="Conceito por trás" value={e.keyConcept} color={C.blue} />
-              </div>
-
-              {e.trigger && (
-                <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${C.lineSoft}`, fontSize: 14.5, fontFamily: "'Literata', serif", lineHeight: 1.6 }}>
-                  {e.trigger}
-                </div>
-              )}
-
-              <div style={{ display: "flex", gap: 7, marginTop: 14 }}>
-                {[["r1", "1 dia"], ["r7", "7 dias"], ["r30", "30 dias"]].map(([k, l]) => (
-                  <span key={k} style={{ fontSize: 12, padding: "2px 8px", borderRadius: 2, border: `1px solid ${e[k + "Done"] ? C.green : C.line}`, color: e[k + "Done"] ? C.green : C.inkFaint }}>
-                    {e[k + "Done"] ? "✓ " : ""}{l}
-                  </span>
-                ))}
-              </div>
-            </Sheet>
-          );
-        })}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 26, paddingTop: 14, borderTop: `1px solid ${C.paperRule}` }}>
+              <button className="ru-btn" disabled={folha === 0} onClick={() => irFolha(folha - 1)}
+                style={{ ...btnG, opacity: folha === 0 ? .35 : 1, background: "transparent" }}>
+                <ArrowLeft size={14} /> Folha anterior
+              </button>
+              <span style={{ fontFamily: "'Kalam', cursive", fontSize: 16, color: C.inkFaint }}>{folha + 1} / {totalFolhas}</span>
+              <button className="ru-btn" disabled={folha >= totalFolhas - 1} onClick={() => irFolha(folha + 1)}
+                style={{ ...btnG, opacity: folha >= totalFolhas - 1 ? .35 : 1, background: "transparent" }}>
+                Próxima folha <ChevronRight size={14} />
+              </button>
+            </div>
+          </Folha>
+        )}
       </div>
 
-      <Sheet style={{ marginTop: 26, maxWidth: 780 }}>
+      <Sheet style={{ marginTop: 30, maxWidth: 780, marginLeft: "auto", marginRight: "auto" }}>
         <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Importar erros</div>
         <div style={{ fontSize: 13.5, color: C.inkSoft, marginBottom: 13, lineHeight: 1.55 }}>
           Cole o bloco que eu montar no chat. Erros repetidos são ignorados automaticamente.
         </div>
         <textarea value={imp} onChange={(e) => setImp(e.target.value)} placeholder='[{"subject": "Matemática", "topic": …}]'
-          style={{ ...inp, width: "100%", minHeight: 88, fontFamily: "ui-monospace, monospace", fontSize: 12.5, resize: "vertical" }} />
+          style={{ ...inp, width: "100%", minHeight: 84, fontFamily: "ui-monospace, monospace", fontSize: 12.5, resize: "vertical" }} />
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 11 }}>
           <button className="ru-btn" onClick={importarErros} style={btnP}><Plus size={14} /> Importar</button>
           {msg && <span style={{ fontSize: 13.5, color: msg.startsWith("O texto") ? C.red : msg.startsWith("Nenhum") ? C.inkSoft : C.green }}>{msg}</span>}
@@ -1781,6 +2166,95 @@ function CadernoErros({ data, persist }) {
             }} style={btnP}>Salvar</button>
           </div>
         </Modal>
+      )}
+    </div>
+  );
+}
+
+function Capa({ total, materias, onOpen }) {
+  return (
+    <button onClick={onOpen} className="ru-capa" style={{
+      width: 330, height: 440, borderRadius: "5px 14px 14px 5px", border: "none", cursor: "pointer",
+      background: C.cover, boxShadow: SH.page, position: "relative", overflow: "hidden",
+      padding: 0, transformStyle: "preserve-3d"
+    }}>
+      <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 22, background: "rgba(0,0,0,.22)" }} />
+      <span style={{ position: "absolute", left: 30, right: 26, top: 30, bottom: 30, border: "1px solid rgba(255,255,255,.16)", borderRadius: 6 }} />
+      <span style={{ position: "absolute", left: 0, right: 0, top: 112, display: "block", color: "#fff", fontFamily: "'Kalam', cursive", fontSize: 34, fontWeight: 700, letterSpacing: ".01em" }}>
+        Caderno de Erros
+      </span>
+      <span style={{ position: "absolute", left: 0, right: 0, top: 166, display: "block", color: "rgba(255,255,255,.6)", fontFamily: "'Kalam', cursive", fontSize: 19 }}>
+        Unicamp 2027
+      </span>
+      <span style={{ position: "absolute", left: 0, right: 0, bottom: 96, display: "block", color: "rgba(255,255,255,.82)", fontFamily: "'Kalam', cursive", fontSize: 21 }}>
+        {total} {total === 1 ? "erro" : "erros"} · {materias} {materias === 1 ? "matéria" : "matérias"}
+      </span>
+      <span style={{ position: "absolute", left: 0, right: 0, bottom: 54, display: "block", color: "rgba(255,255,255,.5)", fontSize: 13, fontFamily: "'Instrument Sans', sans-serif" }}>
+        clique para abrir
+      </span>
+    </button>
+  );
+}
+
+function Folha({ children, dir, wide, color }) {
+  return (
+    <div className={dir === "tras" ? "ru-folha-tras" : "ru-folha"} style={{
+      width: "100%", maxWidth: wide ? 860 : 640, background: C.paper, borderRadius: "4px 12px 12px 4px",
+      boxShadow: SH.page, padding: "38px 44px 34px 74px", position: "relative", overflow: "hidden",
+      backgroundImage: `repeating-linear-gradient(${C.paper} 0px, ${C.paper} 33px, ${C.paperRule} 33px, ${C.paperRule} 34px)`,
+      backgroundPosition: "0 46px", transformOrigin: "left center"
+    }}>
+      <span style={{ position: "absolute", left: 52, top: 0, bottom: 0, width: 1.5, background: C.paperMargin, opacity: .55 }} />
+      <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 14, background: `linear-gradient(90deg, ${C.paperEdge}, transparent)` }} />
+      {[...Array(9)].map((_, i) => (
+        <span key={i} style={{ position: "absolute", left: 20, top: 40 + i * 44, width: 13, height: 13, borderRadius: 999, background: C.bg, boxShadow: `inset 0 1px 2px ${C.ombra}.2)` }} />
+      ))}
+      <div style={{ position: "relative" }}>{children}</div>
+    </div>
+  );
+}
+
+function TituloManuscrito({ children, color }) {
+  return (
+    <div style={{ fontFamily: "'Kalam', cursive", fontWeight: 700, fontSize: 30, color: color || C.ink, marginBottom: 22, lineHeight: 1.4 }}>
+      {children}
+      <span style={{ display: "block", height: 2, background: color || C.ink, opacity: .28, marginTop: 6, width: 190, borderRadius: 2 }} />
+    </div>
+  );
+}
+
+function LinhaManuscrita({ children, muted }) {
+  return <div style={{ fontFamily: "'Kalam', cursive", fontSize: 19, lineHeight: 1.79, color: muted ? C.inkFaint : C.ink }}>{children}</div>;
+}
+
+function ErroManuscrito({ e, ultimo, onDelete }) {
+  const et = ERROR_TYPES[e.errorType || "conteudo"];
+  const sc = SUBJECT_COLOR[e.subject] || C.ink;
+  const K = { fontFamily: "'Kalam', cursive", fontSize: 18.5, lineHeight: 1.79, color: C.ink };
+  const R2 = { fontFamily: "'Kalam', cursive", fontSize: 15, color: C.inkFaint };
+
+  return (
+    <div style={{ marginBottom: ultimo ? 4 : 34, paddingBottom: ultimo ? 0 : 26, borderBottom: ultimo ? "none" : `1px dashed ${C.paperRule}` }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, marginBottom: 8 }}>
+        <div style={{ fontFamily: "'Kalam', cursive", fontWeight: 700, fontSize: 22, color: sc, lineHeight: 1.5 }}>{e.topic}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <span style={{ ...R2, color: et.color, border: `1px solid ${et.color}55`, borderRadius: 999, padding: "1px 10px" }}>{et.label}</span>
+          <span style={R2}>{fmtDate(e.date)}</span>
+          <button className="ru-btn" onClick={onDelete} style={btnI}><Trash2 size={13} color={C.inkFaint} /></button>
+        </div>
+      </div>
+
+      {e.source && <div style={{ ...R2, marginBottom: 10 }}>{e.source}</div>}
+
+      {e.reasoning && <div style={{ ...K, marginBottom: 4 }}><b style={{ color: C.inkSoft, fontWeight: 700 }}>O que fiz.</b> {e.reasoning}</div>}
+      {e.specificError && <div style={{ ...K, marginBottom: 4, color: C.red }}><b style={{ fontWeight: 700 }}>Onde errei.</b> {e.specificError}</div>}
+      {e.correctSolution && <div style={{ ...K, marginBottom: 4, color: C.green }}><b style={{ fontWeight: 700 }}>O certo.</b> {e.correctSolution}</div>}
+      {e.keyConcept && <div style={{ ...K, marginBottom: 4, color: C.blue }}><b style={{ fontWeight: 700 }}>Conceito.</b> {e.keyConcept}</div>}
+
+      {e.trigger && (
+        <div style={{ ...K, marginTop: 10, background: `${C.amber}1F`, borderLeft: `3px solid ${C.amber}`, borderRadius: "0 6px 6px 0", padding: "8px 13px" }}>
+          {e.trigger}
+        </div>
       )}
     </div>
   );
@@ -1866,7 +2340,7 @@ function Painel({ data }) {
                 <XAxis type="number" {...axis} allowDecimals={false} />
                 <YAxis type="category" dataKey="subject" {...axis} width={84} />
                 <Tooltip contentStyle={{ background: C.card, border: "none", borderRadius: R.sm, boxShadow: SH.lift, fontSize: 13, fontFamily: "Instrument Sans" }} />
-                <Bar dataKey="count">{bySubject.map((_, i) => <Cell key={i} fill={i === 0 ? C.red : C.blue} />)}</Bar>
+                <Bar dataKey="count">{bySubject.map((s, i) => <Cell key={i} fill={SUBJECT_COLOR[s.subject] || C.blue} />)}</Bar>
               </BarChart>
             </ResponsiveContainer>
           )}
