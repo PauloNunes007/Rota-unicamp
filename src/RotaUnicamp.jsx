@@ -294,7 +294,7 @@ const emptyData = {
   settings: { dailyHours: 8, blockMinutes: 120, weekSchedule: DEFAULT_WEEK_SCHEDULE, dailyReadingPages: 15, activeObraId: null, dailyCardLimit: 100, cardsFollowSchedule: true, subjectModes: SUBJECT_MODES_DEFAULT }
 };
 
-const SEED_VERSION = 4;
+const SEED_VERSION = 5;
 
 // Junta dados de fábrica novos a um armazenamento que já existe,
 // sem apagar nada que o usuário tenha registrado.
@@ -356,6 +356,21 @@ function migrate(stored) {
     d.topics = [...d.topics, ...faltando];
 
     d.seedVersion = 4;
+  }
+
+  if ((d.seedVersion || 0) < 5) {
+    // adiciona destaque e o ciclo de correção a erros que já existiam,
+    // sem mexer em nada que já estava preenchido
+    d.errors = (d.errors || []).map((e) => ({
+      destaque: false,
+      correctionStatus: "pendente",
+      correctionHistory: [],
+      ...e,
+    }));
+    if (d.settings.correctionsFollowSchedule === undefined) {
+      d.settings.correctionsFollowSchedule = true;
+    }
+    d.seedVersion = 5;
   }
   return d;
 }
@@ -606,6 +621,7 @@ export default function RotaUnicamp() {
         {tab === "flashcards" && <Flashcards data={data} persist={persist} />}
         {tab === "leitura" && <Leitura data={data} persist={persist} />}
         {tab === "erros" && <CadernoErros data={data} persist={persist} />}
+        {tab === "correcao" && <CorrecaoErros data={data} persist={persist} />}
         {tab === "painel" && <Painel data={data} />}
         {tab === "simulados" && <Simulados data={data} persist={persist} />}
         </div>
@@ -622,7 +638,7 @@ export default function RotaUnicamp() {
 /* ---------------- navegação lateral ---------------- */
 function Rail({ tab, setTab, daysLeft, bestScore, tema, trocarTema }) {
   const groups = [
-    ["Hoje", [["rota", "Rota do dia"], ["leitura", "Leitura"], ["flashcards", "Flashcards"]]],
+    ["Hoje", [["rota", "Rota do dia"], ["leitura", "Leitura"], ["flashcards", "Flashcards"], ["correcao", "Correção de erros"]]],
     ["Estudo", [["aulas", "Aulas"], ["topicos", "Tópicos"], ["moldes", "Moldes da banca"]]],
     ["Diagnóstico", [["erros", "Caderno de erros"], ["simulados", "Simulados"], ["painel", "Painel"]]],
   ];
@@ -2017,7 +2033,7 @@ function CadernoErros({ data, persist }) {
   const [open, setOpen] = useState(false);
   const [imp, setImp] = useState(""); const [msg, setMsg] = useState(null);
 
-  const blank = () => ({ subject: SUBJECTS[0], topic: "", errorType: "conteudo", source: "", reasoning: "", specificError: "", correctSolution: "", keyConcept: "", trigger: "" });
+  const blank = () => ({ subject: SUBJECTS[0], topic: "", errorType: "conteudo", source: "", reasoning: "", specificError: "", correctSolution: "", keyConcept: "", trigger: "", destaque: false });
   const [f, setF] = useState(blank());
 
   const porMateria = useMemo(() => {
@@ -2028,6 +2044,7 @@ function CadernoErros({ data, persist }) {
       .sort((a, b) => b.erros.length - a.erros.length);
   }, [data.errors]);
 
+  const fixados = useMemo(() => data.errors.filter((e) => e.destaque), [data.errors]);
   const erros = subject ? (porMateria.find((m) => m.subject === subject)?.erros || []) : [];
   const totalFolhas = Math.max(1, Math.ceil(erros.length / POR_FOLHA));
   const naFolha = erros.slice(folha * POR_FOLHA, folha * POR_FOLHA + POR_FOLHA);
@@ -2051,7 +2068,10 @@ function CadernoErros({ data, persist }) {
           r1Done: !!e.r1Done, r7Done: !!e.r7Done, r30Done: !!e.r30Done,
           subject: e.subject || SUBJECTS[0], topic: e.topic, errorType: e.errorType || "conteudo",
           source: e.source || "", reasoning: e.reasoning || "", specificError: e.specificError || "",
-          correctSolution: e.correctSolution || "", keyConcept: e.keyConcept || "", trigger: e.trigger || ""
+          correctSolution: e.correctSolution || "", keyConcept: e.keyConcept || "", trigger: e.trigger || "",
+          destaque: !!e.destaque,
+          correctionStatus: e.correctionStatus || "pendente",
+          correctionHistory: e.correctionHistory || []
         };
       });
       if (!novos.length) { setMsg("Nenhum erro novo. Todos já estavam no caderno."); return; }
@@ -2080,6 +2100,22 @@ function CadernoErros({ data, persist }) {
         {vista === "sumario" && (
           <Folha key="sumario" dir="frente" wide>
             <TituloManuscrito>Sumário</TituloManuscrito>
+            {fixados.length > 0 && (
+              <div style={{ marginBottom: 22, paddingBottom: 18, borderBottom: `1px dashed ${C.paperRule}` }}>
+                <div style={{ fontFamily: "'Kalam', cursive", fontSize: 19, fontWeight: 700, color: "#B57A16", marginBottom: 10 }}>
+                  ★ Erros que se repetem
+                </div>
+                {fixados.map((e) => (
+                  <button key={e.id} onClick={() => abrirMateria(e.subject)} style={{
+                    display: "block", width: "100%", textAlign: "left", background: "#F6EEDD", border: "1px solid #B57A1655",
+                    borderRadius: 8, padding: "10px 14px", marginBottom: 8, cursor: "pointer", fontFamily: "'Kalam', cursive"
+                  }}>
+                    <span style={{ fontSize: 17, fontWeight: 700, color: "#B57A16" }}>{e.topic}</span>
+                    <span style={{ fontSize: 14, color: C.inkFaint }}>, {e.subject}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             {!porMateria.length && <LinhaManuscrita muted>Nenhum erro registrado ainda.</LinhaManuscrita>}
             {porMateria.map((m, i) => (
               <button key={m.subject} onClick={() => abrirMateria(m.subject)} style={{
@@ -2147,6 +2183,10 @@ function CadernoErros({ data, persist }) {
             {Object.entries(ERROR_TYPES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </select>
           <div style={{ fontSize: 13, color: ERROR_TYPES[f.errorType].color, marginTop: 5 }}>{ERROR_TYPES[f.errorType].fix}</div>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, color: C.inkSoft, marginTop: 12, cursor: "pointer" }}>
+            <input type="checkbox" checked={f.destaque} onChange={(e) => setF({ ...f, destaque: e.target.checked })} />
+            Marcar como erro recorrente, aparece fixado no sumário
+          </label>
           {[["source", "De onde veio a questão", "input"], ["reasoning", "O que eu fiz", "area"], ["specificError", "Onde errei", "area"],
             ["correctSolution", "Como se resolve", "area"], ["keyConcept", "Conceito por trás", "input"], ["trigger", "Gatilho para reconhecer da próxima vez", "input"]].map(([k, l, t]) => (
             <div key={k}>
@@ -2161,12 +2201,171 @@ function CadernoErros({ data, persist }) {
             <button className="ru-btn" onClick={() => {
               if (!f.topic.trim() || !f.specificError.trim()) return;
               const d = todayISO();
-              persist({ ...data, errors: [{ id: uid(), date: d, due1: addDays(d, 1), due7: addDays(d, 7), due30: addDays(d, 30), r1Done: false, r7Done: false, r30Done: false, ...f }, ...data.errors] });
+              persist({ ...data, errors: [{ id: uid(), date: d, due1: addDays(d, 1), due7: addDays(d, 7), due30: addDays(d, 30), r1Done: false, r7Done: false, r30Done: false, correctionStatus: "pendente", correctionHistory: [], ...f }, ...data.errors] });
               setF(blank()); setOpen(false);
             }} style={btnP}>Salvar</button>
           </div>
         </Modal>
       )}
+    </div>
+  );
+}
+
+/* ---------------- Correção de erros ---------------- */
+function CorrecaoErros({ data, persist }) {
+  const today = todayISO();
+  const weekday = new Date(today + "T12:00:00").getDay();
+  const sched = (data.settings.weekSchedule || DEFAULT_WEEK_SCHEDULE)[weekday] || { type: "study", subjects: [] };
+  const todaySubjects = sched.subjects || [];
+  const follow = data.settings.correctionsFollowSchedule !== false;
+
+  const [rev, setRev] = useState(false);
+  const [queue, setQueue] = useState([]);
+  const [reveal, setReveal] = useState(false);
+  const [nota, setNota] = useState("");
+  const [scope, setScope] = useState("dia");
+  const [filter, setFilter] = useState("Todas");
+
+  const pendentesTodos = useMemo(
+    () => data.errors.filter((e) => (e.correctionStatus || "pendente") === "pendente"),
+    [data.errors]
+  );
+  const pendentesDia = useMemo(
+    () => (follow && todaySubjects.length ? pendentesTodos.filter((e) => todaySubjects.includes(e.subject)) : pendentesTodos),
+    [pendentesTodos, follow, todaySubjects]
+  );
+  const pool = scope === "dia" ? pendentesDia : pendentesTodos;
+  const backlog = Math.max(0, pendentesTodos.length - pendentesDia.length);
+
+  const item = rev && queue.length ? data.errors.find((e) => e.id === queue[0]) : null;
+
+  function registrarTentativa(resultado) {
+    const id = queue[0];
+    persist({
+      ...data,
+      errors: data.errors.map((x) => {
+        if (x.id !== id) return x;
+        const historico = [...(x.correctionHistory || []), { date: today, result: resultado, note: nota.trim() }];
+        return { ...x, correctionHistory: historico, correctionStatus: resultado === "acertou" ? "dominado" : "pendente" };
+      }),
+    });
+    const resto = queue.slice(1);
+    setQueue(resto); setReveal(false); setNota("");
+    if (!resto.length) setRev(false);
+  }
+
+  function reabrir(id) {
+    persist({ ...data, errors: data.errors.map((x) => (x.id === id ? { ...x, correctionStatus: "pendente" } : x)) });
+  }
+
+  const dominados = data.errors.filter((e) => e.correctionStatus === "dominado");
+  const list = filter === "Todas" ? data.errors : data.errors.filter((e) => e.subject === filter);
+
+  if (rev) {
+    return (
+      <div style={{ maxWidth: 720, margin: "0 auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+          <span style={{ fontSize: 13.5, color: C.inkSoft }}>{queue.length} restante{queue.length > 1 ? "s" : ""}</span>
+          <button className="ru-btn" onClick={() => setRev(false)} style={btnG}>Pausar</button>
+        </div>
+        {item ? (
+          <div style={{
+            background: C.card, borderTop: `3px solid ${reveal ? C.green : C.blue}`, boxShadow: SH.lift,
+            borderRadius: R.lg, padding: "44px 40px", minHeight: 260
+          }}>
+            <div style={{ fontSize: 12.5, color: C.inkFaint, marginBottom: 8 }}>{item.subject}{item.topic ? `, ${item.topic}` : ""}</div>
+            {item.destaque && <div style={{ fontSize: 12.5, color: "#B57A16", fontWeight: 600, marginBottom: 14 }}>Erro recorrente</div>}
+            {item.source && <div style={{ fontSize: 13, color: C.inkSoft, marginBottom: 18 }}>{item.source}</div>}
+
+            {!reveal ? (
+              <>
+                <div style={{ fontFamily: "'Literata', serif", fontSize: 18, lineHeight: 1.6, marginBottom: 22 }}>
+                  Pense de novo nessa situação antes de olhar a resposta. O que você faria agora
+                </div>
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <button className="ru-btn" onClick={() => setReveal(true)} style={btnP}>Já pensei, mostrar a resposta</button>
+                </div>
+              </>
+            ) : (
+              <>
+                {item.reasoning && <div style={{ fontSize: 15, lineHeight: 1.6, marginBottom: 10 }}><b>O que você fez da última vez.</b> {item.reasoning}</div>}
+                {item.specificError && <div style={{ fontSize: 15, lineHeight: 1.6, marginBottom: 10, color: C.red }}><b>Onde errou.</b> {item.specificError}</div>}
+                {item.correctSolution && <div style={{ fontSize: 15, lineHeight: 1.6, marginBottom: 10, color: C.green }}><b>O certo.</b> {item.correctSolution}</div>}
+                {item.keyConcept && <div style={{ fontSize: 15, lineHeight: 1.6, marginBottom: 10, color: C.blue }}><b>Conceito.</b> {item.keyConcept}</div>}
+                {item.trigger && <div style={{ fontSize: 15, lineHeight: 1.6, marginTop: 14, background: `${C.amber}1F`, borderLeft: `3px solid ${C.amber}`, borderRadius: "0 6px 6px 0", padding: "8px 13px" }}>{item.trigger}</div>}
+
+                <div style={{ marginTop: 20 }}>
+                  <div style={lbl}>Comentário opcional</div>
+                  <input value={nota} onChange={(e) => setNota(e.target.value)} placeholder="ex, errei essa de novo, achei difícil" style={{ ...inp, width: "100%" }} />
+                </div>
+
+                <div style={{ display: "flex", gap: 10, marginTop: 18, justifyContent: "center" }}>
+                  <button className="ru-btn" onClick={() => registrarTentativa("errou")} style={{ ...btnG, color: C.red, borderColor: C.red }}>Errei de novo</button>
+                  <button className="ru-btn" onClick={() => registrarTentativa("acertou")} style={{ ...btnG, color: C.green, borderColor: C.green }}>Acertei dessa vez</button>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <><Empty>Sessão concluída.</Empty><button className="ru-btn" onClick={() => setRev(false)} style={btnG}>Voltar</button></>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <PageHead
+        title="Correção de erros"
+        sub="Volta o mesmo erro até você acertar sem ajuda. Não sai por dia, sai por acerto."
+        right={<button className="ru-btn" disabled={!pool.length} onClick={() => { setQueue(pool.map((e) => e.id)); setReveal(false); setRev(true); }}
+          style={{ ...btnP, opacity: pool.length ? 1 : 0.45, cursor: pool.length ? "pointer" : "default" }}>
+          <RotateCw size={14} /> Corrigir {pool.length}
+        </button>}
+      />
+
+      <Sheet style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", gap: 44, flexWrap: "wrap", alignItems: "flex-start" }}>
+          <Stat value={pendentesDia.length} label={follow && todaySubjects.length ? `pendentes em ${todaySubjects.join(" e ")}` : "pendentes hoje"} color={pendentesDia.length ? C.amber : C.green} />
+          <Stat value={backlog} label="de outras matérias, ficam para o dia delas" color={C.inkFaint} />
+          <Stat value={dominados.length} label="já dominados" color={C.green} />
+        </div>
+        <div style={{ display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap", marginTop: 22, paddingTop: 18, borderTop: `1px solid ${C.lineSoft}` }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: C.inkSoft, cursor: "pointer" }}>
+            <input type="checkbox" checked={follow} onChange={(e) => persist({ ...data, settings: { ...data.settings, correctionsFollowSchedule: e.target.checked } })} />
+            Só as matérias do dia
+          </label>
+          {backlog > 0 && (
+            <button className="ru-btn" onClick={() => setScope(scope === "dia" ? "tudo" : "dia")} style={btnQ}>
+              {scope === "dia" ? "Incluir as outras matérias" : "Voltar só para as do dia"}
+            </button>
+          )}
+        </div>
+      </Sheet>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "30px 0 14px" }}>
+        <div style={{ fontSize: 16, fontWeight: 600 }}>{list.length} erros no caderno</div>
+        <select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ ...sel, fontSize: 13.5 }}>
+          <option>Todas</option>{SUBJECTS.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+      {!list.length && <Empty>Nenhum erro registrado ainda.</Empty>}
+      <div style={{ borderRadius: R.md, overflow: "hidden", background: list.length ? C.card : "transparent", boxShadow: list.length ? SH.card : "none" }}>
+        {list.map((e, i) => {
+          const status = e.correctionStatus || "pendente";
+          return (
+            <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "11px 22px", borderTop: i ? `1px solid ${C.lineSoft}` : "none" }}>
+              {e.destaque && <span style={{ color: "#B57A16", fontSize: 14 }}>★</span>}
+              <span style={{ fontSize: 12.5, color: SUBJECT_COLOR[e.subject] || C.inkFaint, width: 84, flexShrink: 0 }}>{e.subject}</span>
+              <span style={{ flex: 1, fontSize: 14.5, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.topic}</span>
+              {status === "dominado"
+                ? <Tag color={C.green}>dominado</Tag>
+                : <Tag color={C.amber}>pendente</Tag>}
+              {status === "dominado" && <button className="ru-btn" onClick={() => reabrir(e.id)} style={btnQ}>Reabrir</button>}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -2234,9 +2433,16 @@ function ErroManuscrito({ e, ultimo, onDelete }) {
   const R2 = { fontFamily: "'Kalam', cursive", fontSize: 15, color: C.inkFaint };
 
   return (
-    <div style={{ marginBottom: ultimo ? 4 : 34, paddingBottom: ultimo ? 0 : 26, borderBottom: ultimo ? "none" : `1px dashed ${C.paperRule}` }}>
+    <div style={{
+      marginBottom: ultimo ? 4 : 34, paddingBottom: ultimo ? 0 : 26,
+      borderBottom: ultimo ? "none" : `1px dashed ${C.paperRule}`,
+      ...(e.destaque ? { background: "#F6EEDD", borderLeft: "3px solid #B57A16", borderRadius: "0 8px 8px 0", padding: "14px 16px", marginLeft: -16 } : {})
+    }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, marginBottom: 8 }}>
-        <div style={{ fontFamily: "'Kalam', cursive", fontWeight: 700, fontSize: 22, color: sc, lineHeight: 1.5 }}>{e.topic}</div>
+        <div style={{ fontFamily: "'Kalam', cursive", fontWeight: 700, fontSize: 22, color: sc, lineHeight: 1.5 }}>
+          {e.destaque && <span style={{ color: "#B57A16", marginRight: 6 }}>★</span>}
+          {e.topic}
+        </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
           <span style={{ ...R2, color: et.color, border: `1px solid ${et.color}55`, borderRadius: 999, padding: "1px 10px" }}>{et.label}</span>
           <span style={R2}>{fmtDate(e.date)}</span>
