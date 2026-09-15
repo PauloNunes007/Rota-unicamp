@@ -1769,6 +1769,7 @@ function Flashcards({ data, persist }) {
   const [filter, setFilter] = useState("Todas");
   const [one, setOne] = useState({ subject: SUBJECTS[0], topic: "", front: "", back: "" });
   const [bulkS, setBulkS] = useState(SUBJECTS[0]); const [bulkT, setBulkT] = useState(""); const [bulk, setBulk] = useState("");
+  const [jsonImp, setJsonImp] = useState(""); const [jsonMsg, setJsonMsg] = useState(null);
 
   const allDue = useMemo(
     () => data.flashcards.filter((c) => c.nextReview <= today).sort((a, b) => a.nextReview.localeCompare(b.nextReview)),
@@ -1801,6 +1802,25 @@ function Flashcards({ data, persist }) {
 
   const mk = (subject, topic, front, back) => ({ id: uid(), subject, topic, front, back, ease: 2.5, interval: 0, repetitions: 0, nextReview: today, lastReviewed: null });
   const list = filter === "Todas" ? data.flashcards : data.flashcards.filter((c) => c.subject === filter);
+
+  function importarJSON() {
+    try {
+      const itens = [].concat(JSON.parse(jsonImp));
+      const novos = itens.map((c) => {
+        if (!c) return null;
+        const front = c.front ?? c.pergunta ?? c.question ?? c.frente;
+        const back = c.back ?? c.resposta ?? c.answer ?? c.verso;
+        if (!front || !back) return null;
+        const subject = c.subject ?? c.materia ?? c.matéria ?? SUBJECTS[0];
+        const topic = (c.topic ?? c.assunto ?? c.tema ?? "").toString().trim();
+        return mk(subject, topic, String(front).trim(), String(back).trim());
+      }).filter(Boolean);
+      if (!novos.length) { setJsonMsg("Nenhum cartão válido encontrado. Cada item precisa de uma pergunta e uma resposta."); return; }
+      persist({ ...data, flashcards: [...novos, ...data.flashcards] });
+      setJsonImp(""); setJsonMsg(`${novos.length} ${novos.length > 1 ? "cartões adicionados" : "cartão adicionado"}.`);
+      setTimeout(() => setJsonMsg(null), 4000);
+    } catch { setJsonMsg("O texto colado não é um JSON válido."); }
+  }
 
   const topics = useMemo(() => {
     const m = {};
@@ -1943,6 +1963,16 @@ function Flashcards({ data, persist }) {
             if (!novos.length) return;
             persist({ ...data, flashcards: [...novos, ...data.flashcards] }); setBulk("");
           }} style={btnP}><Plus size={14} /> Adicionar todos</button>
+        </Sheet>
+
+        <Sheet style={{ flex: "1 1 300px" }}>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 5 }}>Colar bloco JSON</div>
+          <div style={{ fontSize: 13.5, color: C.inkSoft, marginBottom: 13 }}>Cole aqui o bloco de flashcards que eu mandar no chat.</div>
+          <textarea value={jsonImp} onChange={(e) => setJsonImp(e.target.value)} placeholder='[{"subject": "...", "topic": "...", "front": "...", "back": "..."}]' style={{ ...inp, width: "100%", minHeight: 126, marginBottom: 12, fontFamily: "ui-monospace, monospace", fontSize: 12.5, resize: "vertical" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button className="ru-btn" onClick={importarJSON} style={btnP}><Plus size={14} /> Adicionar do JSON</button>
+            {jsonMsg && <span style={{ fontSize: 13.5, color: jsonMsg.startsWith("Nenhum") || jsonMsg.startsWith("O texto") ? C.red : C.green }}>{jsonMsg}</span>}
+          </div>
         </Sheet>
       </div>
 
