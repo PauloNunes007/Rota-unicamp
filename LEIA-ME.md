@@ -77,5 +77,20 @@ adequado para dados de estudo num app pessoal, mas não seria adequado para
 dados sensíveis. Se um dia você quiser algo mais forte, o caminho é ligar o
 Supabase Auth e trocar as políticas de RLS para usar `auth.uid()`.
 
-**Para atualizar o app**, é só substituir `src/RotaUnicamp.jsx` pela versão
-nova e dar push. Os dados ficam no banco, então nada se perde.
+**Para atualizar o app**, substitua os arquivos em `src/` pela versão nova e
+dê push. Os dados ficam no banco, então nada se perde.
+
+---
+
+## Como o código está organizado
+
+- `src/srs/fsrs.js` — algoritmo FSRS-5 (puro, sem interface)
+- `src/srs/fila.js` — fila da revisão diária, limites, previsão
+- `src/edital.js` — árvore de matérias e tópicos (Fuvest/Unicamp)
+- `src/dados.js` — modelo de dados, migração e leitura de pacotes JSON
+- `src/views/` — telas: Hoje, Estudo livre, Importar, Cartões, Ajustes
+- `src/storage.js` — Supabase + cópia local, com envio agrupado
+
+Formato de um pacote para importar:
+
+    { "nome": "opcional", "cartoes": [ { "frente": "...", "verso": "...", "extra": "opcional" } ] }
